@@ -17,20 +17,37 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Check Python
-        run: |
-          python3 --version
-          which python3
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
 
-      - name: Create virtual environment
+      - name: Verify Python
         run: |
-          python3 -m venv .venv
+          python --version
+          which python
+          python -c "import sys; print(sys.executable)"
+          python -c "import ssl; print(ssl.OPENSSL_VERSION)"
+
+      - name: Remove old virtual environment
+        run: |
+          rm -rf .venv
+
+      - name: Create Python 3.11 virtual environment
+        run: |
+          python -m venv .venv
           .venv/bin/python --version
-          .venv/bin/python -m pip install --upgrade pip
+          .venv/bin/python -c "import sys; print(sys.executable)"
 
       - name: Install dependencies
         run: |
+          .venv/bin/python -m pip install --upgrade pip
           .venv/bin/python -m pip install -r requirements.txt
+
+      - name: Verify cryptography
+        run: |
+          .venv/bin/python -c "import cryptography; print(cryptography.__version__)"
+          .venv/bin/python -c "from cryptography.hazmat.primitives import hashes; print('cryptography OK')"
 
       - name: Run scraper
         run: |
