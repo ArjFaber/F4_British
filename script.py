@@ -21,27 +21,26 @@ from pathlib import Path
 import random 
   
 def obtain_tables_wiki():
-    
-    years = [2022, 2023, 2024, 2025,2026]
+    years = [2022, 2023, 2024, 2025, 2026]
     combined_df = None
     for y in years:
         print("Year: ", y)
         page_url = f"https://en.wikipedia.org/wiki/{y}_F4_British_Championship"
 
-        html = crawl(page_url, 30)
+        try:
+            html = crawl(page_url, 30)
+            article, tables = scrape_article(html)
+        except Exception as e:
+            print(f"Failed to crawl or parse {y}: {e}")
+            continue
 
-        article, tables = scrape_article(html)
         article["source_url"] = page_url
         article["license"] = "CC BY-SA 4.0"
 
         with open("wikipedia.json", "w", encoding="utf-8") as f:
             json.dump(article, f, indent=2, ensure_ascii=False)
 
-        
-
         for i, df in enumerate(tables):
-        
-            # Append metadata columns
             df["year"] = y
             df["table_index"] = i
             df["source_url"] = page_url
@@ -49,25 +48,20 @@ def obtain_tables_wiki():
 
             if isinstance(df.columns, pd.MultiIndex):
                 df.columns = df.columns.get_level_values(0)
-                print(df.columns)
-            #if len(df.columns) == 7:  # originally 3 + 4 metadata columns
-                #df.to_csv(f"wikipedia_table_team_standing_{i}_{y}.csv", index=False)
-            #    combined_df = send_to_database(df,page_url,combined_df,str(i))
 
-            if len(df.columns) > 20:  # originally >20
-                #df.to_csv(f"wikipedia_table_results_{i}_{y}.csv", index=False)
+            if len(df.columns) > 20 or len(df.columns) == 16:
                 try:
-                    combined_df = send_to_database(df,page_url,combined_df,str(i))
-                except:
-                    print("skipped")
-            elif len(df.columns) == 16:  # originally 12 + 4 metadata columns
-                #df.to_csv(f"wikipedia_table_team_standing_{i}_{y}.csv", index=False)
-                try:
-                    combined_df = send_to_database(df,page_url,combined_df,str(i))
-                except:
-                    print("skipped")
+                    combined_df = send_to_database(df, page_url, combined_df, str(i))
+                except Exception as e:
+                    print(f"Skipped table {i} for {y} due to error: {e}")
 
     return combined_df
+
+# Run and check if data was actually collected
+combined_df = obtain_tables_wiki()
+
+if combined_df is None or combined_df.empty:
+    raise ValueError("No data was collected from Wikipedia. Check if table column structures or URLs have changed.")
 
 
 def crawl(url, t):
