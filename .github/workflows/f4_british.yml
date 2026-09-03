@@ -27,17 +27,15 @@ jobs:
           python --version
           which python
           python -c "import sys; print(sys.executable)"
-          python -c "import ssl; print(ssl.OPENSSL_VERSION)"
 
       - name: Remove old virtual environment
         run: |
           rm -rf .venv
 
-      - name: Create Python 3.11 virtual environment
+      - name: Create virtual environment
         run: |
           python -m venv .venv
           .venv/bin/python --version
-          .venv/bin/python -c "import sys; print(sys.executable)"
 
       - name: Install dependencies
         run: |
