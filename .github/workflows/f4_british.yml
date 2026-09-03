@@ -42,11 +42,6 @@ jobs:
           .venv/bin/python -m pip install --upgrade pip
           .venv/bin/python -m pip install -r requirements.txt
 
-      - name: Verify cryptography
-        run: |
-          .venv/bin/python -c "import cryptography; print(cryptography.__version__)"
-          .venv/bin/python -c "from cryptography.hazmat.primitives import hashes; print('cryptography OK')"
-
       - name: Run scraper
         run: |
           .venv/bin/python script.py
